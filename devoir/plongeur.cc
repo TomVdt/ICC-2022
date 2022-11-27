@@ -147,60 +147,8 @@ void update_status(Diver& d, Conditions& conditions_initiales, Status& status) {
 
 // ======================================================================
 // Ce main() NE DOIT PAS ÊTRE MODIFIÉ !
-// int main() {
-//     Diver jacques({ "Jacques"s, 90.0, 0.075, 0.0, {-1.2, 0.8, 0} });
-//     dive(jacques);
-//     return 0;
-// }
-
-void annoncer_test(const Diver& d) {
-    cout << d.nom << "(m="
-         << d.masse << ", v="
-         << d.volume << ", acc="
-         << d.acceleration << ") plonge avec conditions profondeur "
-         << d.conditions.profondeur << ", vitesse "
-         << d.conditions.vitesse << ", temps "
-         << d.conditions.temps << endl;
-}
-
-void test(Diver d) {
-    annoncer_test(d);
-    dive(d);
-    cout << endl;
-}
-
 int main() {
-    cout << "Normal" << endl;
-    test({"Jacques"s, 90.0, 0.075, 0.0, {-1.2, 0.8, 0}});
-
-    cout << "Tout nul" << endl;
-    test({"Michel"s, 90.0, 0.075, 0.0, {0.0, 0.0, 0}});
-
-    cout << "Masses et volumes chelous" << endl;
-    test({"Michel"s, 0.0, 0.075, 0.0, {-1.2, 0.8, 0}});
-    test({"Michel"s, 90.0, 0.0, 0.0, {-1.2, 0.8, 0}});
-
-    cout << "Conditions initiales cheloues" << endl;
-    cout << "En hauteur" << endl;
-    test({"Michel"s, 90.0, 0.075, 0.0, {1.2, 0.8, 0}});
-    test({"Michel"s, 90.0, 0.075, 0.0, {3, -0.8, 0}});
-    cout << "Vitesse haute, sous l'eau" << endl;
-    test({"Michel"s, 90.0, 0.075, 0.0, {-1.2, 5.0, 0}});
-    test({"Michel"s, 90.0, 0.075, 0.0, {-1.2, 100.0, 0}});
-    test({"Michel"s, 90.0, 0.075, 0.0, {-1.2, -5.0, 0}});
-    cout << "Vitesse initiale nulle" << endl;
-    test({"Michel"s, 90.0, 0.075, 0.0, {-1.2, 0.0, 0}});
-    cout << "Profondeur initiale nulle" << endl;
-    test({"Michel"s, 90.0, 0.075, 0.0, {0.0, 0.8, 0}});
-
-    cout << "t0 != 0" << endl;
-    test({"Michel"s, 90.0, 0.075, 0.0, {-1.2, 0.8, -32}});
-    test({"Michel"s, 90.0, 0.075, 0.0, {-1.2, 0.8, 69}});
-
-    cout << "Montées et descentes lentes" << endl;
-    test({"Michel"s, 100.0, 0.101, 0.0, {-1.2, 0.0, 0}});
-    test({"Michel"s, 100.0, 0.101, 0.0, {-1.2, 0.0, 420}});
-    test({"Michel"s, 100.0, 0.095, 0.0, {-1.2, 0.0, 0}});
-
+    Diver jacques({ "Jacques"s, 90.0, 0.075, 0.0, {-1.2, 0.8, 0} });
+    dive(jacques);
     return 0;
 }
