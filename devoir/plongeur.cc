@@ -5,7 +5,8 @@ using namespace std;
 
 // ======================================================================
 
-// Types et constantes
+// =============== Types et constantes ===============
+
 struct Conditions {
     double profondeur;
     double vitesse;
@@ -27,8 +28,11 @@ struct Status {
 };
 
 constexpr double VOLUME_BALLON(0.0375);
+constexpr double PROFONDEUR_DESIREE(-40.0);
+constexpr double PROFONDEUR_BALLON(-43.0);
+constexpr double SEUIL_VMAX(1e-5);
 
-// Prototypes
+// =============== Prototypes ===============
 
 void display(const Diver& d);
 void dive(Diver d);
@@ -36,10 +40,8 @@ void evolve(Diver& d, const Conditions& conditions_initiales);
 void message(const Diver& d, const string& mess, double valeur, const string& unitees);
 void update_status(Diver& d, Conditions& conditions_initiales, Status& status);
 
+// =============== Implémentations ===============
 
-// Implémentations
-
-// Affiche les données du plongeur (temps, profondeur, vitesse, acceleration)
 void display(const Diver& d) {
     cout << d.conditions.temps << ", "
          << d.conditions.profondeur << ", "
@@ -47,7 +49,6 @@ void display(const Diver& d) {
          << d.acceleration << endl;
 }
 
-// Affiche un message pour un certain état donné
 void message(const Diver& d, const string& mess, double valeur, const string& unite) {
     cout << "## (t = "
          << d.conditions.temps << " s) "
@@ -58,7 +59,6 @@ void message(const Diver& d, const string& mess, double valeur, const string& un
          << endl;
 }
 
-// Boucle principale de la simulation
 void dive(Diver d) {
     // Vérification des données d'entrée
     // Une masse négative ou nulle n'a pas trop de sens dans ce contexte
@@ -72,24 +72,23 @@ void dive(Diver d) {
         cerr << "Le volume du plongeur ne peut pas être négatif ou nul!" << endl;
         return;
     }
+    // L'accélération initiale n'affecte pas la simulation
 
     // Vérification de conditions initiales cohérentes
-    // Les equations sont seulement valables dans l'eau, on veut donc commencer
-    // la simulation dans l'eau
+    // Les equations sont seulement valables dans l'eau, on veut donc commencer la simulation dans l'eau
     if (d.conditions.profondeur > 0.0) {
         cerr << "Le plongeur doit commencer dans l'eau!" << endl;
         return;
     }
-    // Pour éviter que le plongeur sorte de l'eau avant de couler, on veut une vitesse positive
-    if (d.conditions.vitesse < 0.0) {
-        cerr << "Le plongeur doit commencer avec une vitesse vers le bas! (vitesse positive ou nulle)" << endl;
-        return;
-    }
+    // La vitesse initiale peut prendre n'importe quelle valeur, puisque:
+    //  - soit le plongeur monte et sort de l'eau (fin)
+    //  - soit le plongeur monte (on ne compte que vmax pour la descente), redescend, puis remonte (fin)
+    //  - soit le plongeur descend, puis remonte (fin)
+    // On a que des écarts de temps dans les equations, le temps initial n'a donc pas d'importance
 
     // La simulation peut maintenant avoir lieu
     // Copie des conditions du plongeur pour les conditions initiales
     Conditions conditions_initiales(d.conditions);
-    // Marqueurs d'évolution de la simulation
     Status status({false, false, false});
 
     // do ... while pour accepter le cas profondeur = 0
@@ -100,11 +99,10 @@ void dive(Diver d) {
         update_status(d, conditions_initiales, status);
     } while (d.conditions.profondeur < 0.0);
 
-    // On est sorti de l'eau
+    // Fin de la simulation, on est sorti de l'eau
     message(d, "est de retour à la surface", d.conditions.profondeur, "m");
 }
 
-// Calculs pour l'évolution des parametres du plongeur
 void evolve(Diver& d, const Conditions& conditions_initiales) {
     ++d.conditions.temps;
 
@@ -126,18 +124,17 @@ void evolve(Diver& d, const Conditions& conditions_initiales) {
     d.conditions.profondeur = p0 + (k * (alpha - 1)) + (t * g * mu);
 }
 
-// Met à jour l'état et affiche des messages quand certaines conditions sur la plongée sont atteintes
 void update_status(Diver& d, Conditions& conditions_initiales, Status& status) {
-    // Seulement afficher le message si le plongeur descend!
-    if (!status.vitesse_max_atteinte && d.acceleration < 1e-5 && d.conditions.vitesse > 0) {
+    // Seulement afficher le message si le plongeur descend (vitesse > 0) et qu'il n'a pas déjà été affiché
+    if (!status.vitesse_max_atteinte && d.acceleration < SEUIL_VMAX && d.conditions.vitesse > 0) {
         status.vitesse_max_atteinte = true;
         message(d, "a atteint sa vitesse maximale", d.acceleration, "ms-2");
     }
-    if (!status.profondeur_atteinte && d.conditions.profondeur < -40.0) {
+    if (!status.profondeur_atteinte && d.conditions.profondeur < PROFONDEUR_DESIREE) {
         status.profondeur_atteinte = true;
         message(d, "a atteint la profondeur desirée", d.conditions.profondeur, "m");
     }
-    if (!status.ballon_gonfle && d.conditions.profondeur < -43.0) {
+    if (!status.ballon_gonfle && d.conditions.profondeur < PROFONDEUR_BALLON) {
         status.ballon_gonfle = true;
         // Nouvelles conditions "initiales"
         d.volume += VOLUME_BALLON;
@@ -151,9 +148,9 @@ void update_status(Diver& d, Conditions& conditions_initiales, Status& status) {
 // ======================================================================
 // Ce main() NE DOIT PAS ÊTRE MODIFIÉ !
 // int main() {
-//   Diver jacques({ "Jacques"s, 90.0, 0.075, 0.0, {-1.2, 0.8, 0} });
-//   dive(jacques);
-//   return 0;
+//     Diver jacques({ "Jacques"s, 90.0, 0.075, 0.0, {-1.2, 0.8, 0} });
+//     dive(jacques);
+//     return 0;
 // }
 
 void annoncer_test(const Diver& d) {
