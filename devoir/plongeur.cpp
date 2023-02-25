@@ -1,6 +1,7 @@
 #include <cmath>  // pour exp()
 #include <iostream>
 #include <string>
+#include <string_view>
 using namespace std;
 
 // ======================================================================
@@ -27,6 +28,7 @@ struct Status {
     bool ballon_gonfle;
 };
 
+constexpr double g(9.81);
 constexpr double VOLUME_BALLON(0.0375);
 constexpr double PROFONDEUR_DESIREE(-40.0);
 constexpr double PROFONDEUR_BALLON(-43.0);
@@ -35,9 +37,10 @@ constexpr double SEUIL_VMAX(1e-5);
 // =============== Prototypes ===============
 
 void display(const Diver& d);
+bool donnees_valides(const Diver& d);
 void dive(Diver d);
 void evolve(Diver& d, const Conditions& conditions_initiales);
-void message(const Diver& d, const string& mess, double valeur, const string& unitees);
+void message(const Diver& d, string_view mess, double valeur, string_view unitees);
 void update_status(Diver& d, Conditions& conditions_initiales, Status& status);
 
 // =============== Implémentations ===============
@@ -49,7 +52,7 @@ void display(const Diver& d) {
          << d.acceleration << endl;
 }
 
-void message(const Diver& d, const string& mess, double valeur, const string& unite) {
+void message(const Diver& d, string_view mess, double valeur, string_view unite) {
     cout << "## (t = "
          << d.conditions.temps << " s) "
          << d.nom << " "
@@ -59,32 +62,46 @@ void message(const Diver& d, const string& mess, double valeur, const string& un
          << endl;
 }
 
-void dive(Diver d) {
-    // Vérification des données d'entrée
+bool donnees_valides(const Diver& d) {
+    // Pour permettre plusieurs messages d'erreur
+    bool valide(true);
+
+    // Vérification des données
     // Une masse négative ou nulle n'a pas trop de sens dans ce contexte
     // (en plus d'éviter la division par 0 pour le "coefficient d'archimede")
     if (d.masse <= 0.0) {
-        cerr << "La masse du plongeur ne peut pas être négative ou nulle!" << endl;
-        return;
+        cerr << "La masse du plongeur doit être strictement positive!" << endl;
+        valide = false;
     }
+
     // Un volume négatif ou nul n'a pas de sens
     if (d.volume <= 0.0) {
-        cerr << "Le volume du plongeur ne peut pas être négatif ou nul!" << endl;
-        return;
+        cerr << "Le volume du plongeur doit être strictement positive!" << endl;
+        valide = false;
     }
+
     // L'accélération initiale n'affecte pas la simulation
 
-    // Vérification de conditions initiales cohérentes
     // Les equations sont seulement valables dans l'eau, on veut donc commencer la simulation dans l'eau
     if (d.conditions.profondeur > 0.0) {
         cerr << "Le plongeur doit commencer dans l'eau!" << endl;
-        return;
+        valide = false;
     }
+
     // La vitesse initiale peut prendre n'importe quelle valeur, puisque:
     //  - soit le plongeur monte et sort de l'eau (fin)
     //  - soit le plongeur monte (on ne compte que vmax pour la descente), redescend, puis remonte (fin)
     //  - soit le plongeur descend, puis remonte (fin)
-    // On a que des écarts de temps dans les equations, le temps initial n'a donc pas d'importance
+
+    // Les equations ne comportent que des écart de temps, le temps initial n'a donc pas d'importance
+
+    return valide;
+}
+
+void dive(Diver d) {
+    if (!donnees_valides(d)) {
+        return;
+    }
 
     // La simulation peut maintenant avoir lieu
     // Copie des conditions du plongeur pour les conditions initiales
@@ -112,7 +129,6 @@ void evolve(Diver& d, const Conditions& conditions_initiales) {
     const double& t0(conditions_initiales.temps);
 
     // Quelques constantes qui apparaissent plusieurs fois dans les formules
-    constexpr double g(9.81);
     const double t(t0 - d.conditions.temps);
     const double mu(1.0 - 1000.0 * (d.volume / d.masse));
     const double alpha(exp(t));
@@ -148,7 +164,7 @@ void update_status(Diver& d, Conditions& conditions_initiales, Status& status) {
 // ======================================================================
 // Ce main() NE DOIT PAS ÊTRE MODIFIÉ !
 int main() {
-    Diver jacques({ "Jacques"s, 90.0, 0.075, 0.0, {-1.2, 0.8, 0} });
+    Diver jacques({"Jacques"s, 90.0, 0.075, 0.0, {-1.2, 0.8, 0}});
     dive(jacques);
     return 0;
 }
